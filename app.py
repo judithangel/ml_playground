@@ -4,6 +4,7 @@ from core.models import list_models, get_param_space, build_model, list_clusters
       build_cluster
 from core.pipeline import pca_project, train_and_eval, cluster_and_eval
 import plotly.express as px
+import pandas as pd
 
 # Seiteneinstellungen für Streamlit
 st.set_page_config(page_title="ML Playground", layout="wide")
@@ -12,12 +13,15 @@ st.title("Streamlit example")
 problem_type = st.sidebar.radio("Select type of problem", ["Classification", "Clustering"])
 data_source = st.sidebar.selectbox("Select data source", ["Upload CSV", "Use Sample Data"])
 if data_source == "Upload CSV":
+    data = st.file_uploader("Upload CSV", type=["csv"])
     has_target = st.checkbox("Has target?")
     if has_target:
-        target = st.text_input("Target column:")
+        df_preview = pd.read_csv(data, nrows=5)
+        target = st.selectbox("Select target column", df_preview.columns.tolist())
+        data.seek(0)  # Reset file pointer after reading preview
     else:
         target = None
-    data = st.file_uploader("Upload CSV", type=["csv"])
+    dataset_name = data.name
     X, y = load_csv(data, target=target)
 elif data_source == "Use Sample Data":
     dataset_name = st.sidebar.selectbox("Select dataset", list_datasets())
@@ -58,9 +62,9 @@ for p_name, spec in param_space.items():
 
 pca_dim = st.sidebar.selectbox("Choose PCA Dimension", [2, 3])
 X_pca = pca_project(X, n_components=pca_dim)
-ms = st.sidebar.slider("Marker Size", 1, 10, 1)
-op = st.sidebar.slider("Opacity", 0.1, 1.0, 0.1)
-plot_height = st.sidebar.slider("Plot height", 400, 1000, 100)
+ms = st.sidebar.slider("Marker Size", 1, 10, 6)
+op = st.sidebar.slider("Opacity", 0.1, 1.0, 0.7, 0.1)
+plot_height = st.sidebar.slider("Plot height", 400, 1000, 600)
 
 st.write(f"Shape of dataset: {X.shape}")
 if problem_type == "Classification":
@@ -72,17 +76,17 @@ if problem_type == "Classification":
 else:
     st.write(f"Number of clusters: {len(set(y)) if y is not None else 'unknown'}")
     cluster_model = build_cluster(cluster, params)
-    result = cluster_and_eval(X, y, cluster_model)
-    st.write(f"Silhouette Score: {result['silhouette_score']:.2f}")
-    st.write(f"Calinski-Harabasz Score: {result['calinski_harabasz_score']:.2f}")
-    st.write(f"Davies-Bouldin Score: {result['davies_bouldin_score']:.2f}")
+    result = cluster_and_eval(X, cluster_model)
+    st.write(f"Silhouette Score: {result['silhouette']:.2f}")
+    st.write(f"Calinski-Harabasz Score: {result['calinski']:.2f}")
+    st.write(f"Davies-Bouldin Score: {result['davies']:.2f}")
     y_pred = result['predictions']
 
 if pca_dim == 2:
     fig = px.scatter(
     x=X_pca[:, 0],
     y=X_pca[:, 1],
-    color=y.astype(str),
+    color=y.astype(str) if y is not None else None,
     labels={
         "x": "PC 1",
         "y": "PC 2",

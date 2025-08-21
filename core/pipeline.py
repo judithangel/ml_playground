@@ -12,17 +12,17 @@ def train_and_eval(X, y, model):
     return {"model": model, "accuracy": acc, "predictions": y_pred, "test-set": X_test}
 
 def cluster_and_eval(X, model, y_true=None):
-    y_pred = model.fit_predict(X)
-    n_clusters = len(set(y_pred)) - (1 if -1 in y_pred else 0)
-    silhouette = silhouette_score(X, y_pred)
-    calinski = calinski_harabasz_score(X, y_pred)
-    davies = davies_bouldin_score(X, y_pred)
+    labels = model.fit_predict(X)
+    n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+    silhouette = silhouette_score(X, labels)
+    calinski = calinski_harabasz_score(X, labels)
+    davies = davies_bouldin_score(X, labels)
     if y_true is not None:
-        ari = adjusted_rand_score(y_true, y_pred)
-        nmi = normalized_mutual_info_score(y_true, y_pred)
-        return {"model": model, "predictions": y_pred, "test-set": X, "n_clusters": n_clusters, 
+        ari = adjusted_rand_score(y_true, labels)
+        nmi = normalized_mutual_info_score(y_true, labels)
+        return {"model": model, "predictions": labels, "test-set": X, "n_clusters": n_clusters,
                 "silhouette": silhouette, "calinski": calinski, "davies": davies, "ari": ari, "nmi": nmi}
-    return {"model": model, "predictions": y_pred, "test-set": X, "n_clusters": n_clusters, "silhouette": silhouette,
+    return {"model": model, "predictions": labels, "test-set": X, "n_clusters": n_clusters, "silhouette": silhouette,
             "calinski": calinski, "davies": davies}
 
 def pca_project(X, n_components=2):

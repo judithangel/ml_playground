@@ -25,10 +25,10 @@ def load_csv(file, target=None, drop_non_num=True):
         non_numerical_cols = df.select_dtypes(exclude=['number']).columns.tolist()
         df.drop(columns=non_numerical_cols, inplace=True)
     df.dropna(inplace=True)
-    if target is not None:
-        X = df.drop(columns=[target])
-        y = df[target]
+    if target is None:
+        y = None
+        X = df.copy()
     else:
-        X = df.iloc[:, :-1]
-        y = df.iloc[:, -1]
+        y = df[target]
+        X = df.drop(columns=[target])
     return X, y
